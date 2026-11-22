@@ -421,6 +421,69 @@ if nav_choice == "🎨 Campaign Studio":
                     width="stretch"
                 )
 
+        # -------------------------------------------------------------------
+        # CAMPAIGN POSTER TYPOGRAPHY DESIGNER
+        # -------------------------------------------------------------------
+        st.markdown("<br>", unsafe_allow_html=True)
+        with st.expander("✍️ Add Campaign Typography & Posters (Headlines, Slogans, Badges)", expanded=False):
+            st.caption("Overlay crisp, perfectly-spelled healthcare headlines and slogans directly onto your generated visual.")
+
+            t_col1, t_col2 = st.columns([1, 1], gap="medium")
+            with t_col1:
+                default_h = campaign_title.upper() if campaign_title.strip() else f"{health_theme.upper()} CARE"
+                poster_headline = st.text_input(
+                    "Headline / Main Title",
+                    value=default_h,
+                    placeholder="e.g., BEAT DIABETES, WORLD HEART DAY"
+                )
+                poster_slogan = st.text_input(
+                    "Slogan / Action Subtitle",
+                    value="Balanced Nutrition • Daily Movement • Regular Checkups",
+                    placeholder="e.g., Small Daily Steps For A Healthier Tomorrow"
+                )
+            with t_col2:
+                poster_badge = st.text_input(
+                    "Awareness Tag / Badge",
+                    value=f"🌿 {health_theme.upper()} AWARENESS",
+                    placeholder="e.g., PUBLIC HEALTH ADVOCACY"
+                )
+                poster_footer = st.text_input(
+                    "Footer Disclaimer / Organization",
+                    value="For Public Health Education • WellAware AI",
+                    placeholder="e.g., Sponsored by Healthcare Foundation"
+                )
+
+            if st.button("✨ Render Typography Poster", width="stretch", key="apply_typo_btn"):
+                from poster_designer import render_campaign_poster
+                active_img = results[0]["image"]
+                final_poster = render_campaign_poster(
+                    base_image=active_img,
+                    headline=poster_headline,
+                    slogan=poster_slogan,
+                    badge_text=poster_badge,
+                    footer_text=poster_footer
+                )
+
+                engine = load_cached_generator()
+                poster_path = engine.save_visual_to_disk(
+                    final_poster,
+                    campaign_title=f"{poster_headline}_poster",
+                    seed=results[0]["seed"]
+                )
+
+                st.markdown("#### 🖼️ Finished Campaign Poster:")
+                st.image(final_poster, width="stretch")
+
+                poster_bytes = image_to_bytes(final_poster)
+                st.download_button(
+                    label="⬇️ Download Finished Poster (PNG)",
+                    data=poster_bytes,
+                    file_name=os.path.basename(poster_path),
+                    mime="image/png",
+                    key="dl_final_poster_btn",
+                    width="stretch"
+                )
+
 
 # ===========================================================================
 # VIEW 2: 🖼️ SESSION GALLERY
