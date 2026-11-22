@@ -150,7 +150,6 @@ with st.sidebar:
             "🎨 Campaign Studio",
             "🖼️ Session Gallery",
             "⚡ Quick Presets",
-            "🖌️ Instant Poster (No AI)",
             "ℹ️ Architecture & Standards"
         ],
         index=0
@@ -221,18 +220,21 @@ if nav_choice == "🎨 Campaign Studio":
         st.markdown("#### 1️⃣ Campaign Identity & Topic")
         
         # Check if pre-populated from Quick Presets
-        preset_data = st.session_state.get("selected_preset")
-        default_title = preset_data.get("title", "") if preset_data else ""
-        default_theme = preset_data.get("theme", "Heart Health") if preset_data else "Heart Health"
-        default_desc = preset_data.get("desc", "") if preset_data else ""
-        default_style = preset_data.get("style", "3D Illustration") if preset_data else "3D Illustration"
+        if "selected_preset" in st.session_state and st.session_state["selected_preset"] is not None:
+            preset_data = st.session_state.pop("selected_preset")
+            st.session_state["form_title"] = preset_data.get("title", "")
+            st.session_state["form_theme"] = preset_data.get("theme", "Heart Health")
+            st.session_state["form_desc"] = preset_data.get("desc", "")
+            st.session_state["form_style"] = preset_data.get("style", "3D Illustration")
 
         theme_list = get_available_themes()
-        theme_index = theme_list.index(default_theme) if default_theme in theme_list else 0
+        curr_theme = st.session_state.get("form_theme", "Heart Health")
+        theme_index = theme_list.index(curr_theme) if curr_theme in theme_list else 0
 
         campaign_title = st.text_input(
             "Campaign Title / Slogan",
-            value=default_title,
+            value=st.session_state.get("form_title", ""),
+            key="form_title",
             placeholder="e.g., Healthy Hearts 2026, Mindful Steps, Diabetes Care",
             help="Adds thematic framing to the generated visual."
         )
@@ -241,6 +243,7 @@ if nav_choice == "🎨 Campaign Studio":
             "Health Awareness Theme",
             options=theme_list,
             index=theme_index,
+            key="form_theme",
             help="Selects domain visual motifs, color harmonies, and patient-friendly symbols."
         )
 
@@ -249,7 +252,8 @@ if nav_choice == "🎨 Campaign Studio":
 
         user_description = st.text_area(
             "Visual Description (What should be pictured?)",
-            value=default_desc,
+            value=st.session_state.get("form_desc", ""),
+            key="form_desc",
             placeholder=f"e.g., {placeholder_desc}",
             height=90,
             help="Describe the scene or leave blank to automatically use curated domain knowledge."
@@ -259,12 +263,14 @@ if nav_choice == "🎨 Campaign Studio":
         st.markdown("#### 2️⃣ Artistic Direction & Format")
 
         style_list = get_available_styles()
-        style_index = style_list.index(default_style) if default_style in style_list else 0
+        curr_style = st.session_state.get("form_style", "3D Illustration")
+        style_index = style_list.index(curr_style) if curr_style in style_list else 0
 
         style = st.selectbox(
             "Visual Style",
             options=style_list,
             index=style_index,
+            key="form_style",
             format_func=lambda s: f"{STYLE_DIRECTIVES[s]['badge']} - {s}"
         )
 
@@ -313,10 +319,16 @@ if nav_choice == "🎨 Campaign Studio":
         '<span class="token-badge-warn">🟡 Near Limit</span>'
     )
 
+    # Sync prompt editor with current inputs unless user manually edited
+    if st.session_state.get("last_auto_prompt") != auto_prompt:
+        st.session_state["positive_prompt_area"] = auto_prompt
+        st.session_state["negative_prompt_area"] = auto_negative
+        st.session_state["last_auto_prompt"] = auto_prompt
+
     with st.expander(f"🔍 Prompt Inspector & Optimizer ({est_tokens} / 77 tokens • {token_status})", expanded=False):
         st.caption("Stable Diffusion CLIP text encoder processes up to 77 tokens. Keeping prompts focused and front-loaded ensures 100% of keywords are rendered.")
-        final_prompt = st.text_area("Positive Prompt (Front-Loaded)", value=auto_prompt, height=85)
-        final_negative = st.text_area("Domain Negative Prompt", value=auto_negative, height=65)
+        final_prompt = st.text_area("Positive Prompt (Front-Loaded)", key="positive_prompt_area", height=85)
+        final_negative = st.text_area("Domain Negative Prompt", key="negative_prompt_area", height=65)
 
     # -----------------------------------------------------------------------
     # GENERATION TRIGGER & REAL-TIME FEEDBACK
@@ -593,11 +605,11 @@ elif nav_choice == "⚡ Quick Presets":
 
     presets = [
         {
-            "title": "Mental Health Awareness (Infographic Poster)",
+            "title": "Mental Health Awareness",
             "theme": "Mental Wellness",
             "style": "Flat Design",
-            "desc": "modern flat 2d vector illustration of a woman touching her forehead with hand, white thought cloud with tangled scribble line, green awareness ribbon, dark heart icon, clean solid teal background, bold clean outlines, flat colors",
-            "badge": "🧠 Mental Health • Action Infographic"
+            "desc": "calm peaceful woman touching her forehead with hand in contemplation, centered figure, solid plain teal background, minimal clean vector shapes",
+            "badge": "🧠 Mental Health • Flat Art"
         },
         {
             "title": "Heart Health Vitality 2026",
@@ -663,129 +675,7 @@ elif nav_choice == "⚡ Quick Presets":
 
 
 # ===========================================================================
-# VIEW 4: 🖌️ INSTANT POSTER (PURE PILLOW — ZERO AI, PERFECT TEXT)
-# ===========================================================================
-elif nav_choice == "🖌️ Instant Poster (No AI)":
-    st.markdown("### 🖌️ Instant Poster Generator")
-    st.markdown(
-        "> **Zero AI wait time** — posters are drawn 100% with Pillow shapes & system fonts.  "
-        "Every word is **always perfectly spelled**. No garbled text. Ready in under 1 second."
-    )
-
-    from poster_artist import draw_custom_poster, POSTER_THEMES
-
-    # ── Preset themes or custom ──────────────────────────────────────────
-    theme_options = list(POSTER_THEMES.keys()) + ["Custom"]
-    theme_choice = st.selectbox(
-        "🎨 Poster Theme",
-        options=theme_options,
-        format_func=lambda k: {
-            "mental_health": "🧠 Mental Health Awareness",
-            "diabetes": "💉 Diabetes Awareness",
-            "heart_health": "🫀 Heart Health Awareness",
-            "nutrition": "🥗 Healthy Nutrition",
-            "Custom": "✏️ Custom (edit below)",
-        }.get(k, k),
-    )
-
-    # Pre-fill from theme or leave blank for custom
-    if theme_choice != "Custom":
-        t = POSTER_THEMES[theme_choice]
-        default_l1 = t["title_line1"]
-        default_l2 = t["title_line2"]
-        default_bullets = "\n".join(t["bullets"])
-        default_bg = "#{:02X}{:02X}{:02X}".format(*t["bg_color"])
-        default_footer = "#{:02X}{:02X}{:02X}".format(*t["footer_bg"])
-        default_bullet_color = "#{:02X}{:02X}{:02X}".format(*t["bullet_color"])
-    else:
-        default_l1 = "YOUR CAMPAIGN"
-        default_l2 = "TITLE HERE"
-        default_bullets = "ACTION POINT ONE\nACTION POINT TWO\nACTION POINT THREE"
-        default_bg = "#166372"
-        default_footer = "#0B2132"
-        default_bullet_color = "#88C057"
-
-    col_left, col_right = st.columns([1, 1], gap="large")
-
-    with col_left:
-        st.markdown("#### ✏️ Poster Content")
-        title_l1 = st.text_input("Title Line 1", value=default_l1, key="ip_l1")
-        title_l2 = st.text_input("Title Line 2 (optional)", value=default_l2, key="ip_l2")
-        bullets_raw = st.text_area(
-            "Bullet Points (one per line, max 4)",
-            value=default_bullets,
-            height=120,
-            key="ip_bullets"
-        )
-        poster_width = st.slider("Poster Width (px)", 400, 1000, 600, 50, key="ip_w")
-
-        st.markdown("#### 🎨 Colours")
-        bg_hex = st.color_picker("Background", value=default_bg, key="ip_bg")
-        footer_hex = st.color_picker("Footer Panel", value=default_footer, key="ip_footer")
-        bullet_hex = st.color_picker("Bullet Dots", value=default_bullet_color, key="ip_bul")
-
-        def hex_to_rgb(h):
-            h = h.lstrip("#")
-            return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-
-        generate_btn = st.button("🚀 Generate Poster Instantly", key="ip_gen", type="primary")
-
-    with col_right:
-        st.markdown("#### 👁️ Live Preview")
-
-        if generate_btn or "ip_last_poster" in st.session_state:
-            if generate_btn:
-                bullets = [b.strip() for b in bullets_raw.split("\n") if b.strip()][:4]
-                poster_img = draw_custom_poster(
-                    title_line1=title_l1,
-                    title_line2=title_l2,
-                    bullets=bullets,
-                    bg_color=hex_to_rgb(bg_hex),
-                    footer_bg=hex_to_rgb(footer_hex),
-                    bullet_color=hex_to_rgb(bullet_hex),
-                    width=poster_width,
-                )
-                st.session_state["ip_last_poster"] = poster_img
-
-            poster_img = st.session_state["ip_last_poster"]
-            st.image(poster_img, caption="Generated poster — 100% Pillow, zero AI, perfect text", width=380)
-
-            # Download button
-            import io as _io
-            buf = _io.BytesIO()
-            poster_img.save(buf, format="PNG")
-            st.download_button(
-                label="⬇️ Download PNG",
-                data=buf.getvalue(),
-                file_name=f"{title_l1.lower().replace(' ', '_')}_poster.png",
-                mime="image/png",
-                key="ip_dl"
-            )
-
-            # Also save to generated_images/
-            if generate_btn:
-                save_path = os.path.join(
-                    config.GENERATED_IMAGES_DIR,
-                    f"{title_l1.lower().replace(' ', '_')}_pillow_poster.png"
-                )
-                poster_img.save(save_path)
-                st.success(f"✅ Saved to `{save_path}`")
-        else:
-            st.info("👈 Configure poster options then click **Generate Poster Instantly**")
-
-    st.markdown("---")
-    st.markdown("""
-    **Why no AI for text?**
-    Stable Diffusion models like SD v1.5 were never trained to understand letter shapes — 
-    they treat text as texture patterns, producing garbled characters like `HHEATI C`. 
-    This **Instant Poster** tool bypasses the AI for all typography and icons, using only 
-    Python's Pillow library with real TrueType fonts — giving you **publication-ready, 
-    zero-error text** every single time.
-    """)
-
-
-# ===========================================================================
-# VIEW 5: ℹ️ ARCHITECTURE & STANDARDS
+# VIEW 4: ℹ️ ARCHITECTURE & STANDARDS
 # ===========================================================================
 elif nav_choice == "ℹ️ Architecture & Standards":
     st.markdown("### ℹ️ Architecture & Engineering Standards")

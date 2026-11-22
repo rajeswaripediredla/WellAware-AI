@@ -4,6 +4,7 @@ Transforms user campaign concepts into concise, high-density diffusion prompts
 strictly optimized for CLIP's 77-token limit and high-aesthetic healthcare design.
 """
 
+import re
 from typing import Dict, List, Tuple
 import config
 
@@ -92,49 +93,49 @@ STYLE_DIRECTIVES: Dict[str, Dict[str, str]] = {
         "front": "3D clay illustration, isometric render, Pixar style",
         "details": "soft ambient occlusion, smooth matte finish",
         "finish": "trending on ArtStation, 8k, clean isolated background",
-        "negative": "photo, ugly, deformed, flat 2d, sketch, dark, grainy, text, watermark"
+        "negative": "text, letters, words, font, typography, watermark, logo, banner, photo, ugly, deformed, flat 2d, sketch, dark, grainy, clutter, scribbles"
     },
     "Minimalist": {
         "badge": "📐 Minimalist Vector",
-        "front": "minimalist healthcare poster, modern graphic design",
+        "front": "minimalist clean vector healthcare art, simple modern illustration",
         "details": "clean negative space, bold geometric shapes",
-        "finish": "award-winning poster, crisp vector edges, high contrast",
-        "negative": "cluttered, noisy, photographic, messy textures, text, watermark"
+        "finish": "crisp vector edges, high contrast, clean plain background",
+        "negative": "text, letters, words, font, typography, watermark, logo, banner, cluttered, noisy, photographic, messy textures, doodles, scribbles"
     },
     "Realistic": {
         "badge": "📸 Photorealistic",
-        "front": "commercial healthcare photography, professional award-winning shot",
+        "front": "commercial healthcare photography, professional studio shot",
         "details": "85mm lens, natural studio lighting, authentic smile",
         "finish": "8k UHD, clean studio background, cinematic depth of field",
-        "negative": "cartoon, 3d render, drawing, plastic skin, distorted face, text, watermark"
+        "negative": "text, letters, words, font, typography, watermark, logo, banner, cartoon, 3d render, drawing, plastic skin, distorted face, clutter"
     },
     "Flat Design": {
         "badge": "📊 Modern Flat Art",
-        "front": "modern flat vector healthcare graphic, clean corporate aesthetic",
-        "details": "bold color blocking, sharp geometric silhouettes",
-        "finish": "Dribbble trending vector, clean SVG lines, high visual clarity",
-        "negative": "3d render, photo, glossy, complex shadows, noise, text, watermark"
+        "front": "modern 2D flat vector illustration, clean minimalist healthcare art",
+        "details": "bold color blocking, sharp clean silhouettes",
+        "finish": "clean SVG outlines, high visual clarity, solid plain background, single subject",
+        "negative": "text, letters, words, font, typography, writing, headline, label, banner, watermark, logo, 3d render, photo, glossy, complex shadows, noise, doodles, scribbles, chaotic cluttered patterns"
     },
     "Cartoon Illustration": {
         "badge": "🧸 Friendly Cartoon",
         "front": "friendly healthcare storybook illustration, warm patient art",
         "details": "expressive whimsical characters, clean smooth linework",
-        "finish": "delightful children health book quality, vibrant, charming",
-        "negative": "photorealistic, terrifying, sterile gore, harsh 3d, dark shadows, text, watermark"
+        "finish": "delightful children health book quality, vibrant, clean simple background",
+        "negative": "text, letters, words, font, typography, watermark, logo, banner, photorealistic, terrifying, sterile gore, harsh 3d, dark shadows, scribbles"
     },
     "Professional Healthcare Illustration": {
         "badge": "🏥 Medical Editorial",
-        "front": "professional medical journal editorial illustration, clean healthcare graphic",
+        "front": "professional medical editorial illustration, clean healthcare visual",
         "details": "scientific aesthetic, balanced digital watercolor",
-        "finish": "Mayo Clinic journal editorial style, crisp, refined",
-        "negative": "childish cartoon, surgery gore, morbid, sketch, text, watermark"
+        "finish": "Mayo Clinic journal editorial style, crisp, refined, clean plain background",
+        "negative": "text, letters, words, font, typography, watermark, logo, banner, childish cartoon, surgery gore, morbid, sketch, scribbles"
     }
 }
 
 COMPOSITION_DIRECTIVES: Dict[str, str] = {
-    "Square (1:1) - Social Media / Card": "centered iconic composition",
-    "Portrait (2:3) - Campaign Poster": "vertical poster layout",
-    "Landscape (3:2) - Website Banner": "wide banner layout, rule of thirds"
+    "Square (1:1) - Social Media / Card": "centered iconic composition, clean background",
+    "Portrait (2:3) - Campaign Poster": "vertical portrait framing, centered composition, plain uncluttered background",
+    "Landscape (3:2) - Website Banner": "wide banner layout, rule of thirds, clean background"
 }
 
 
@@ -168,24 +169,30 @@ def build_prompt(
     """
     Synthesizes a punchy, front-loaded diffusion prompt strictly bounded to
     fit within CLIP's 77-token ceiling (~45 to 65 tokens total).
+    Prioritizes the exact user-requested subject while actively suppressing
+    text, chaotic doodles, and distorted elements.
     """
     style_cfg = STYLE_DIRECTIVES.get(style, STYLE_DIRECTIVES["3D Illustration"])
     theme_cfg = THEME_PRESETS.get(health_theme, THEME_PRESETS["Heart Health"])
-    composition = COMPOSITION_DIRECTIVES.get(aspect_ratio, "centered composition")
+    composition = COMPOSITION_DIRECTIVES.get(aspect_ratio, "centered composition, clean background")
 
-    # Determine core subject
+    # Determine core subject - user's requested scene comes FIRST
     if user_description.strip():
-        core_subject = user_description.strip()
+        clean_desc = user_description.strip()
+        # Sanitize words that mislead SD into drawing text/infographic charts
+        clean_desc = re.sub(r"\b(infographic poster|infographic|poster|flyer)\b", "illustration", clean_desc, flags=re.IGNORECASE)
+        core_subject = clean_desc
     else:
         core_subject = theme_cfg["default_desc"]
 
-    # Assemble front-loaded, high-impact prompt
-    # 1. Front: Style + Primary Subject + Optional Title context
-    # 2. Mid: Details + Composition + Palette
-    # 3. Tail: Finish & Quality
+    # Build primary subject: style + exact subject requested
     style_and_subject = f"{style_cfg['front']} of {core_subject}"
     if campaign_title.strip():
-        style_and_subject = f"{style_cfg['front']} for '{campaign_title.strip()}', of {core_subject}"
+        # Clean campaign title of quotes and forbidden formatting words
+        clean_title = re.sub(r"[\"'\(\)\[\]]", "", campaign_title.strip())
+        clean_title = re.sub(r"\b(poster|infographic|flyer|banner|text)\b", "", clean_title, flags=re.IGNORECASE).strip()
+        if clean_title:
+            style_and_subject = f"{style_cfg['front']} of {core_subject}, themed around {clean_title}"
 
     prompt_parts = [
         style_and_subject,
@@ -200,7 +207,7 @@ def build_prompt(
 
     positive_prompt = ", ".join(prompt_parts)
 
-    # Clean, targeted negative prompt
+    # Clean, targeted negative prompt strictly suppressing text & scribbles
     base_negative = config.DEFAULT_NEGATIVE_PROMPT
     negative_prompt = f"{style_cfg['negative']}, {base_negative}"
 

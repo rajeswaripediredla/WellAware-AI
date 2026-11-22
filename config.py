@@ -61,10 +61,14 @@ ASPECT_RATIOS = {
 }
 
 # ---------------------------------------------------------------------------
-# Negative Prompt Defaults (Domain-specific for Healthcare & Hygiene visuals)
+# Negative Prompt Defaults (Strictly suppress in-image text, clutter, and distortions)
 # ---------------------------------------------------------------------------
 DEFAULT_NEGATIVE_PROMPT = (
+    "text, words, letters, alphabet, typography, writing, script, font, "
+    "headline, title, label, slogan, banner, logo, brand, watermark, signature, "
+    "blurry text, garbled text, pseudotext, characters, quote, captions, numbers, "
+    "messy doodles, scribbles, chaotic patterns, crowded background, clutter, "
     "ugly, deformed, disfigured, poor anatomy, bad hands, missing fingers, "
-    "extra limbs, blurry, low quality, pixelated, watermark, signature, "
-    "cut off, text, hospital horror, gory, morbid, violent, distorted faces"
+    "extra limbs, blurry, low quality, pixelated, cut off, "
+    "hospital horror, gory, morbid, violent, distorted faces"
 )
