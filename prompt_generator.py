@@ -97,35 +97,35 @@ STYLE_DIRECTIVES: Dict[str, Dict[str, str]] = {
     },
     "Minimalist": {
         "badge": "📐 Minimalist Vector",
-        "front": "minimalist clean vector healthcare art, simple modern illustration",
+        "front": "minimalist clean vector art, simple modern illustration",
         "details": "clean negative space, bold geometric shapes",
         "finish": "crisp vector edges, high contrast, clean plain background",
         "negative": "text, letters, words, font, typography, watermark, logo, banner, cluttered, noisy, photographic, messy textures, doodles, scribbles"
     },
     "Realistic": {
         "badge": "📸 Photorealistic",
-        "front": "commercial healthcare photography, professional studio shot",
+        "front": "commercial portrait photography, professional studio shot",
         "details": "85mm lens, natural studio lighting, authentic smile",
         "finish": "8k UHD, clean studio background, cinematic depth of field",
         "negative": "text, letters, words, font, typography, watermark, logo, banner, cartoon, 3d render, drawing, plastic skin, distorted face, clutter"
     },
     "Flat Design": {
         "badge": "📊 Modern Flat Art",
-        "front": "modern 2D flat vector illustration, clean minimalist healthcare art",
+        "front": "modern 2D flat vector illustration, clean minimalist art",
         "details": "bold color blocking, sharp clean silhouettes",
         "finish": "clean SVG outlines, high visual clarity, solid plain background, single subject",
         "negative": "text, letters, words, font, typography, writing, headline, label, banner, watermark, logo, 3d render, photo, glossy, complex shadows, noise, doodles, scribbles, chaotic cluttered patterns"
     },
     "Cartoon Illustration": {
         "badge": "🧸 Friendly Cartoon",
-        "front": "friendly healthcare storybook illustration, warm patient art",
+        "front": "friendly storybook illustration, warm charming art",
         "details": "expressive whimsical characters, clean smooth linework",
         "finish": "delightful children health book quality, vibrant, clean simple background",
         "negative": "text, letters, words, font, typography, watermark, logo, banner, photorealistic, terrifying, sterile gore, harsh 3d, dark shadows, scribbles"
     },
     "Professional Healthcare Illustration": {
         "badge": "🏥 Medical Editorial",
-        "front": "professional medical editorial illustration, clean healthcare visual",
+        "front": "professional editorial illustration, clean elegant visual",
         "details": "scientific aesthetic, balanced digital watercolor",
         "finish": "Mayo Clinic journal editorial style, crisp, refined, clean plain background",
         "negative": "text, letters, words, font, typography, watermark, logo, banner, childish cartoon, surgery gore, morbid, sketch, scribbles"

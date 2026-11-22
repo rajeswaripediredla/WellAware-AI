@@ -371,6 +371,10 @@ if nav_choice == "🎨 Campaign Studio":
             progress_bar.progress(85, text="Finishing & saving visuals...")
 
             saved_results = []
+            from poster_designer import render_infographic_action_poster, get_theme_poster_preset
+
+            theme_defaults = get_theme_poster_preset(health_theme)
+
             for res in raw_results:
                 final_img = res["image"]
                 if apply_polish:
@@ -386,6 +390,48 @@ if nav_choice == "🎨 Campaign Studio":
                 res["filename"] = os.path.basename(filepath)
                 res["theme"] = health_theme
                 res["style"] = style
+
+                # Automatically composite publication-grade campaign poster
+                if campaign_title.strip():
+                    words = campaign_title.strip().split()
+                    if len(words) > 2:
+                        mid_pt = (len(words) + 1) // 2
+                        t_l1 = " ".join(words[:mid_pt])
+                        t_l2 = " ".join(words[mid_pt:])
+                    else:
+                        t_l1 = words[0]
+                        t_l2 = words[1] if len(words) > 1 else ""
+                else:
+                    t_l1 = theme_defaults["title_line1"]
+                    t_l2 = theme_defaults["title_line2"]
+
+                initial_poster = render_infographic_action_poster(
+                    base_image=final_img,
+                    title_line1=t_l1,
+                    title_line2=t_l2,
+                    badge_text=theme_defaults.get("badge", "PUBLIC HEALTH ADVOCACY"),
+                    action_bullets=theme_defaults["bullets"],
+                    bullet_color=theme_defaults.get("bullet_color", (136, 192, 87)),
+                    footer_bg=theme_defaults.get("footer_bg", (11, 33, 45)),
+                    footer_text=theme_defaults.get("footer", "Non-Clinical Patient Education • WellAware AI")
+                )
+
+                poster_path = engine.save_visual_to_disk(
+                    image=initial_poster,
+                    campaign_title=f"{t_l1}_{t_l2}_poster",
+                    seed=res["seed"]
+                )
+
+                res["poster"] = initial_poster
+                res["poster_filepath"] = poster_path
+                res["poster_filename"] = os.path.basename(poster_path)
+                res["poster_title1"] = t_l1
+                res["poster_title2"] = t_l2
+                res["poster_bullets"] = theme_defaults["bullets"]
+                res["poster_footer"] = theme_defaults.get("footer", "")
+                res["poster_badge"] = theme_defaults.get("badge", "PUBLIC HEALTH ADVOCACY")
+                res["bullet_color"] = theme_defaults.get("bullet_color", (136, 192, 87))
+
                 saved_results.append(res)
 
             total_elapsed = round(time.time() - start_time_all, 1)
@@ -406,152 +452,126 @@ if nav_choice == "🎨 Campaign Studio":
     if st.session_state["current_results"]:
         st.markdown("---")
         st.markdown("### 🖼️ Campaign Output Studio")
+        st.caption("Each generation produces both a **Publication-Ready Campaign Poster** and a **Standalone Visual Asset**.")
 
         results = st.session_state["current_results"]
-        cols = st.columns(len(results), gap="medium")
+        cols = st.columns(len(results), gap="large")
 
         for idx, res in enumerate(results):
             with cols[idx]:
-                st.image(res["image"], width="stretch")
+                has_poster = "poster" in res and res["poster"] is not None
+                if has_poster:
+                    tab_poster, tab_artwork = st.tabs(["📰 Finished Campaign Poster", "🎨 Standalone Visual"])
+                    with tab_poster:
+                        st.image(res["poster"], width="stretch", caption="Commercial Campaign Poster • 640×960")
+                        poster_bytes = image_to_bytes(res["poster"])
+                        st.download_button(
+                            label="⬇️ Download Finished Poster (PNG)",
+                            data=poster_bytes,
+                            file_name=res.get("poster_filename", "campaign_poster.png"),
+                            mime="image/png",
+                            key=f"dl_poster_{idx}_{res['seed']}",
+                            type="primary",
+                            width="stretch"
+                        )
+                    with tab_artwork:
+                        st.image(res["image"], width="stretch", caption=f"Hero Artwork • {res['width']}×{res['height']}")
+                        img_bytes = image_to_bytes(res["image"])
+                        st.download_button(
+                            label="⬇️ Download Raw Artwork (PNG)",
+                            data=img_bytes,
+                            file_name=res["filename"],
+                            mime="image/png",
+                            key=f"dl_art_{idx}_{res['seed']}",
+                            width="stretch"
+                        )
+                else:
+                    st.image(res["image"], width="stretch")
+                    img_bytes = image_to_bytes(res["image"])
+                    st.download_button(
+                        label="⬇️ Download Visual (PNG)",
+                        data=img_bytes,
+                        file_name=res["filename"],
+                        mime="image/png",
+                        key=f"dl_raw_{idx}_{res['seed']}",
+                        width="stretch"
+                    )
 
                 # Sleek Metadata Badges
                 st.markdown(f"""
-                <div>
+                <div style="margin-top: 6px;">
                     <span class="metric-badge">🎲 Seed: {res['seed']}</span>
                     <span class="metric-badge">⏱️ {res['generation_time']}s</span>
-                    <span class="metric-badge">📐 {res['width']}×{res['height']}</span>
+                    <span class="metric-badge">🏷️ {res['theme']}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
-                st.markdown("<br>", unsafe_allow_html=True)
-                img_bytes = image_to_bytes(res["image"])
-                st.download_button(
-                    label=f"⬇️ Download High-Res PNG",
-                    data=img_bytes,
-                    file_name=res["filename"],
-                    mime="image/png",
-                    key=f"dl_btn_{idx}_{res['seed']}",
-                    width="stretch"
-                )
-
         # -------------------------------------------------------------------
-        # CAMPAIGN POSTER TYPOGRAPHY DESIGNER
+        # INSTANT POSTER TYPOGRAPHY & LAYOUT CUSTOMIZER
         # -------------------------------------------------------------------
         st.markdown("<br>", unsafe_allow_html=True)
-        with st.expander("✍️ Design Campaign Poster Typography (Headlines, Slogans, Infographic Bullets)", expanded=True):
-            st.caption("Overlay crisp, publication-grade healthcare headlines, slogans, and action bullets directly onto your visual.")
+        with st.expander("✏️ Customize Poster Headline, Action Points & Helplines (Instant Update)", expanded=False):
+            st.caption("Change titles, action bullets, or helpline footer in real time without waiting for diffusion inference.")
 
-            poster_layout = st.radio(
-                "Poster Layout Structure",
-                [
-                    "📋 Infographic Action Poster (Top Header + Bottom Action Bullets — Like Reference Poster)",
-                    "🌆 Gradient Card Overlay (Modern Headline + Subtitle at Bottom)"
-                ],
-                index=0
-            )
+            active_res = results[0]
+            c_top, c_bot = st.columns(2, gap="medium")
 
-            if "Infographic Action Poster" in poster_layout:
-                c_top, c_bot = st.columns(2, gap="medium")
-                with c_top:
-                    st.markdown("**Top Header Title:**")
-                    p_title1 = st.text_input("Title Line 1", value="MENTAL HEALTH")
-                    p_title2 = st.text_input("Title Line 2", value="AWARENESS")
-                with c_bot:
-                    st.markdown("**Bottom Action Bullets (1 per line):**")
-                    p_bullets = st.text_area(
-                        "Action Points",
-                        value="UNDERSTAND\nTALK ABOUT IT\nSEEK HELP",
-                        height=90,
-                        help="Enter action points to display as bulleted list at bottom of poster."
-                    )
+            with c_top:
+                st.markdown("**Top Header & Badge:**")
+                edit_t1 = st.text_input("Title Line 1", value=active_res.get("poster_title1", "MENTAL HEALTH"), key="cust_t1")
+                edit_t2 = st.text_input("Title Line 2", value=active_res.get("poster_title2", "AWARENESS"), key="cust_t2")
+                edit_badge = st.text_input("Advocacy Badge", value=active_res.get("poster_badge", "PUBLIC HEALTH ADVOCACY"), key="cust_badge")
 
-                if st.button("✨ Render Infographic Poster", width="stretch", key="apply_info_poster_btn"):
-                    from poster_designer import render_infographic_action_poster
-                    active_img = results[0]["image"]
-                    bullet_list = [b.strip() for b in p_bullets.split("\n") if b.strip()]
-                    final_poster = render_infographic_action_poster(
-                        base_image=active_img,
-                        title_line1=p_title1,
-                        title_line2=p_title2,
-                        action_bullets=bullet_list
-                    )
+            with c_bot:
+                st.markdown("**Bottom Action Points & Footer:**")
+                curr_bullets = active_res.get("poster_bullets", ["UNDERSTAND", "TALK ABOUT IT", "SEEK HELP"])
+                edit_bullets_text = st.text_area(
+                    "Action Points (one per line, max 3)",
+                    value="\n".join(curr_bullets),
+                    height=80,
+                    key="cust_bullets"
+                )
+                edit_footer = st.text_input(
+                    "Footer Helpline / Organization",
+                    value=active_res.get("poster_footer", "National Wellness Initiative • Need Support? Call or Text 988"),
+                    key="cust_footer"
+                )
 
-                    engine = load_cached_generator()
-                    poster_path = engine.save_visual_to_disk(
-                        final_poster,
-                        campaign_title=f"{p_title1}_{p_title2}_infographic_poster",
-                        seed=results[0]["seed"]
-                    )
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("⚡ Update Poster (Instant)", type="primary", width="stretch", key="update_poster_instant_btn"):
+                from poster_designer import render_infographic_action_poster
+                cleaned_bullets = [b.strip() for b in edit_bullets_text.split("\n") if b.strip()][:3]
+                engine = load_cached_generator()
 
-                    st.markdown("#### 🖼️ Finished Infographic Campaign Poster:")
-                    st.image(final_poster, width="stretch")
+                for r in results:
+                    updated_poster = render_infographic_action_poster(
+                        base_image=r["image"],
+                        title_line1=edit_t1,
+                        title_line2=edit_t2,
+                        badge_text=edit_badge,
+                        action_bullets=cleaned_bullets,
+                        footer_text=edit_footer,
+                        bullet_color=r.get("bullet_color", (136, 192, 87))
+                    )
+                    r["poster"] = updated_poster
+                    r["poster_title1"] = edit_t1
+                    r["poster_title2"] = edit_t2
+                    r["poster_bullets"] = cleaned_bullets
+                    r["poster_badge"] = edit_badge
+                    r["poster_footer"] = edit_footer
 
-                    poster_bytes = image_to_bytes(final_poster)
-                    st.download_button(
-                        label="⬇️ Download Finished Poster (PNG)",
-                        data=poster_bytes,
-                        file_name=os.path.basename(poster_path),
-                        mime="image/png",
-                        key="dl_final_info_poster_btn",
-                        width="stretch"
+                    # Save updated poster
+                    p_path = engine.save_visual_to_disk(
+                        image=updated_poster,
+                        campaign_title=f"{edit_t1}_{edit_t2}_poster",
+                        seed=r["seed"]
                     )
+                    r["poster_filepath"] = p_path
+                    r["poster_filename"] = os.path.basename(p_path)
 
-            else:
-                t_col1, t_col2 = st.columns([1, 1], gap="medium")
-                with t_col1:
-                    default_h = campaign_title.upper() if campaign_title.strip() else f"{health_theme.upper()} CARE"
-                    poster_headline = st.text_input(
-                        "Headline / Main Title",
-                        value=default_h,
-                        placeholder="e.g., BEAT DIABETES, WORLD HEART DAY"
-                    )
-                    poster_slogan = st.text_input(
-                        "Slogan / Action Subtitle",
-                        value="Balanced Nutrition • Daily Movement • Regular Checkups",
-                        placeholder="e.g., Small Daily Steps For A Healthier Tomorrow"
-                    )
-                with t_col2:
-                    poster_badge = st.text_input(
-                        "Awareness Tag / Badge",
-                        value=f"🌿 {health_theme.upper()} AWARENESS",
-                        placeholder="e.g., PUBLIC HEALTH ADVOCACY"
-                    )
-                    poster_footer = st.text_input(
-                        "Footer Disclaimer / Organization",
-                        value="For Public Health Education • WellAware AI",
-                        placeholder="e.g., Sponsored by Healthcare Foundation"
-                    )
-
-                if st.button("✨ Render Typography Poster", width="stretch", key="apply_typo_btn"):
-                    from poster_designer import render_campaign_poster
-                    active_img = results[0]["image"]
-                    final_poster = render_campaign_poster(
-                        base_image=active_img,
-                        headline=poster_headline,
-                        slogan=poster_slogan,
-                        badge_text=poster_badge,
-                        footer_text=poster_footer
-                    )
-
-                    engine = load_cached_generator()
-                    poster_path = engine.save_visual_to_disk(
-                        final_poster,
-                        campaign_title=f"{poster_headline}_poster",
-                        seed=results[0]["seed"]
-                    )
-
-                    st.markdown("#### 🖼️ Finished Campaign Poster:")
-                    st.image(final_poster, width="stretch")
-
-                    poster_bytes = image_to_bytes(final_poster)
-                    st.download_button(
-                        label="⬇️ Download Finished Poster (PNG)",
-                        data=poster_bytes,
-                        file_name=os.path.basename(poster_path),
-                        mime="image/png",
-                        key="dl_final_poster_btn",
-                        width="stretch"
-                    )
+                st.session_state["current_results"] = results
+                st.toast("✅ Poster updated with custom typography!", icon="🎨")
+                st.rerun()
 
 
 # ===========================================================================
