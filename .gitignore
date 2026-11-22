@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Environment Variables
+.env
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# OS Generated Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Large Hugging Face model cache (if placed locally)
+*.ckpt
+*.safetensors
+*.bin
+*.pt
+
+# Keep generated_images folder but ignore ad-hoc files except .gitkeep
+# (Remove the line below if you want to track generated visuals in git)
+# generated_images/*
+# !generated_images/.gitkeep

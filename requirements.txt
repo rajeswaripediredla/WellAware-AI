@@ -1,0 +1,15 @@
+# WellAware AI - Dependencies
+# Core ML & Generative AI
+torch>=2.1.0
+torchvision>=0.16.0
+diffusers>=0.27.0
+transformers>=4.38.0
+accelerate>=0.28.0
+safetensors>=0.4.2
+
+# Application & UI
+streamlit>=1.32.0
+
+# Image & Data Processing
+pillow>=10.2.0
+numpy>=1.24.0
