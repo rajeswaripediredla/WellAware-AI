@@ -85,6 +85,36 @@ class CampaignImageGenerator:
         self.is_loaded = True
         print(f"[ImageGenerator] Model successfully loaded in {load_time:.2f} seconds.")
 
+    def load_lora_weights(self, lora_path: Optional[str] = None, weight_name: Optional[str] = None) -> bool:
+        """Loads custom trained LoRA adapter weights into the active pipeline."""
+        if not self.is_loaded or self.pipe is None:
+            self.load_pipeline()
+
+        target_path = lora_path or config.DEFAULT_LORA_PATH
+        if os.path.exists(target_path):
+            try:
+                if os.path.isdir(target_path):
+                    self.pipe.load_lora_weights(target_path, weight_name=weight_name)
+                else:
+                    folder = os.path.dirname(target_path)
+                    fname = os.path.basename(target_path)
+                    self.pipe.load_lora_weights(folder, weight_name=fname)
+                print(f"[ImageGenerator] Successfully loaded LoRA weights from: {target_path}")
+                return True
+            except Exception as e:
+                print(f"[ImageGenerator] Could not load LoRA weights: {e}")
+                return False
+        return False
+
+    def unload_lora_weights(self) -> None:
+        """Unloads LoRA adapters from the UNet."""
+        if self.is_loaded and self.pipe is not None:
+            try:
+                self.pipe.unload_lora_weights()
+                print("[ImageGenerator] LoRA weights unloaded.")
+            except Exception:
+                pass
+
     def generate_single_visual(
         self,
         prompt: str,

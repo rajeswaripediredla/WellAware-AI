@@ -10,10 +10,16 @@ import torch
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "generated_images")
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+LORA_DIR = os.path.join(BASE_DIR, "lora_models")
+TRAINING_DATA_DIR = os.path.join(BASE_DIR, "training_data")
 
 # Ensure output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(ASSETS_DIR, exist_ok=True)
+os.makedirs(LORA_DIR, exist_ok=True)
+os.makedirs(TRAINING_DATA_DIR, exist_ok=True)
+
+DEFAULT_LORA_PATH = os.path.join(LORA_DIR, "wellaware_healthcare_lora.safetensors")
 
 # ---------------------------------------------------------------------------
 # Model Selection & Hugging Face Checkpoint

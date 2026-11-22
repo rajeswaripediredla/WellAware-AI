@@ -286,6 +286,13 @@ if nav_choice == "🎨 Campaign Studio":
             use_fixed_seed = st.checkbox("Deterministic Seed (Reproducible)", value=False)
             custom_seed = st.number_input("Seed Value", value=42, step=1, disabled=not use_fixed_seed)
             apply_polish = st.checkbox("Apply Editorial Polish (Edge Sharpness & Vibrance)", value=True)
+            
+            lora_exists = os.path.exists(config.DEFAULT_LORA_PATH)
+            if lora_exists:
+                use_lora = st.checkbox("✨ Activate Custom Healthcare LoRA Weights", value=True)
+            else:
+                st.caption("💡 *Custom LoRA Adapter: Run `train_lora.py` to activate trained weights.*")
+                use_lora = False
 
     # -----------------------------------------------------------------------
     # PROMPT OPTIMIZER & TOKEN GAUGE
@@ -326,6 +333,13 @@ if nav_choice == "🎨 Campaign Studio":
         try:
             status_box.info("🌿 Loading Stable Diffusion pipeline...")
             engine = load_cached_generator()
+
+            if use_lora:
+                engine.load_lora_weights(config.DEFAULT_LORA_PATH)
+                if "wellaware style" not in final_prompt:
+                    final_prompt = f"wellaware style, {final_prompt}"
+            else:
+                engine.unload_lora_weights()
 
             status_box.info(f"🎨 Running DPM-Solver++ (Karras) across {num_variations} variation(s)...")
             progress_bar.progress(20, text=f"Denoising latents ({steps} steps)...")
