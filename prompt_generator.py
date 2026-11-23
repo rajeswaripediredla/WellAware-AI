@@ -77,7 +77,7 @@ THEME_PRESETS: Dict[str, Dict[str, str]] = {
     },
     "Patient Education": {
         "icon": "📖",
-        "subject": "clear visual health infographic diagram, friendly healthcare guide",
+        "subject": "accessible visual healthcare guide, friendly doctor and medical icons",
         "elements": "digital health tablet, anatomical visual guide, medical icons",
         "palette": "instructional navy blue, vibrant teal, warm coral, clean white",
         "default_desc": "accessible healthcare education visual with clear health icons and friendly guide"
@@ -179,20 +179,21 @@ def build_prompt(
     # Determine core subject - user's requested scene comes FIRST
     if user_description.strip():
         clean_desc = user_description.strip()
-        # Sanitize words that mislead SD into drawing text/infographic charts
-        clean_desc = re.sub(r"\b(infographic poster|infographic|poster|flyer)\b", "illustration", clean_desc, flags=re.IGNORECASE)
+        # Sanitize words that mislead SD into drawing text, gibberish labels, or infographic charts
+        clean_desc = re.sub(
+            r"\b(infographic poster|infographic|poster|flyer|banner|text|words|letters|font|spelling|typography|slogan|headline|title|writing|script|diagram|signage)\b",
+            "illustration",
+            clean_desc,
+            flags=re.IGNORECASE
+        )
+        clean_desc = re.sub(r"\s+", " ", clean_desc).strip()
         core_subject = clean_desc
     else:
         core_subject = theme_cfg["default_desc"]
 
-    # Build primary subject: style + exact subject requested
+    # Build primary subject: style + exact visual subject (keep pure visual artwork;
+    # titles and slogans are handled cleanly by the typography engine to eliminate spelling mistakes)
     style_and_subject = f"{style_cfg['front']} of {core_subject}"
-    if campaign_title.strip():
-        # Clean campaign title of quotes and forbidden formatting words
-        clean_title = re.sub(r"[\"'\(\)\[\]]", "", campaign_title.strip())
-        clean_title = re.sub(r"\b(poster|infographic|flyer|banner|text)\b", "", clean_title, flags=re.IGNORECASE).strip()
-        if clean_title:
-            style_and_subject = f"{style_cfg['front']} of {core_subject}, themed around {clean_title}"
 
     prompt_parts = [
         style_and_subject,

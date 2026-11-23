@@ -302,6 +302,66 @@ if nav_choice == "🎨 Campaign Studio":
                 use_lora = False
 
     # -----------------------------------------------------------------------
+    # 3️⃣ POSTER TYPOGRAPHY & ACTION POINTS (CONFIGURED BEFORE GENERATION)
+    # -----------------------------------------------------------------------
+    from poster_designer import render_infographic_action_poster, get_theme_poster_preset
+
+    theme_defaults = get_theme_poster_preset(health_theme)
+
+    # Compute default headlines from campaign title or theme preset
+    if campaign_title.strip():
+        words = campaign_title.strip().upper().split()
+        if len(words) > 2:
+            mid_pt = (len(words) + 1) // 2
+            def_t1 = " ".join(words[:mid_pt])
+            def_t2 = " ".join(words[mid_pt:])
+        elif len(words) == 2:
+            def_t1, def_t2 = words[0], words[1]
+        else:
+            def_t1 = words[0]
+            def_t2 = theme_defaults.get("title_line2", "")
+    else:
+        def_t1 = theme_defaults.get("title_line1", "HEALTH AWARENESS")
+        def_t2 = theme_defaults.get("title_line2", "CAMPAIGN")
+
+    def_badge = theme_defaults.get("badge", "PUBLIC HEALTH ADVOCACY")
+    preset_bullets = theme_defaults.get("bullets", ["UNDERSTAND", "TALK ABOUT IT", "SEEK HELP"])
+    def_b1 = preset_bullets[0] if len(preset_bullets) > 0 else "UNDERSTAND"
+    def_b2 = preset_bullets[1] if len(preset_bullets) > 1 else "TALK ABOUT IT"
+    def_b3 = preset_bullets[2] if len(preset_bullets) > 2 else "SEEK HELP"
+    def_footer = theme_defaults.get("footer", "National Wellness Initiative • Need Support? Call or Text 988")
+
+    # Keep session state synced when theme or campaign title changes
+    current_key_theme = f"{health_theme}_{campaign_title}"
+    if st.session_state.get("last_typo_key") != current_key_theme:
+        st.session_state["typo_title1"] = def_t1
+        st.session_state["typo_title2"] = def_t2
+        st.session_state["typo_badge"] = def_badge
+        st.session_state["typo_bullet1"] = def_b1
+        st.session_state["typo_bullet2"] = def_b2
+        st.session_state["typo_bullet3"] = def_b3
+        st.session_state["typo_footer"] = def_footer
+        st.session_state["last_typo_key"] = current_key_theme
+
+    st.markdown("---")
+    st.markdown("#### 3️⃣ Poster Typography & Action Points (Configured Before Generating)")
+    st.caption("Customize the bold headline, advocacy badge, action points, and helpline footer before generating. The AI generates clean artwork without misspelling gibberish and immediately composites your exact typography into a finished commercial poster.")
+
+    col_typo_hdr, col_typo_act = st.columns(2, gap="large")
+    with col_typo_hdr:
+        st.markdown("**Top Header & Headline:**")
+        typo_t1 = st.text_input("Poster Headline (Line 1)", key="typo_title1", help="Large condensed bold display headline.")
+        typo_t2 = st.text_input("Poster Headline (Line 2)", key="typo_title2", help="Second headline line (optional).")
+        typo_badge = st.text_input("Advocacy / Category Badge", key="typo_badge", help="Small top header badge.")
+
+    with col_typo_act:
+        st.markdown("**Bottom Action Points & Helpline Footer:**")
+        typo_b1 = st.text_input("Action Bullet 1", key="typo_bullet1")
+        typo_b2 = st.text_input("Action Bullet 2", key="typo_bullet2")
+        typo_b3 = st.text_input("Action Bullet 3", key="typo_bullet3")
+        typo_footer = st.text_input("Helpline / Organization Footer", key="typo_footer")
+
+    # -----------------------------------------------------------------------
     # PROMPT OPTIMIZER & TOKEN GAUGE
     # -----------------------------------------------------------------------
     auto_prompt, auto_negative = build_prompt(
@@ -334,7 +394,7 @@ if nav_choice == "🎨 Campaign Studio":
     # GENERATION TRIGGER & REAL-TIME FEEDBACK
     # -----------------------------------------------------------------------
     st.markdown("<br>", unsafe_allow_html=True)
-    generate_btn = st.button("🚀 Generate Campaign Visual(s)", type="primary", width="stretch")
+    generate_btn = st.button("🚀 Generate Campaign Visual & Poster", type="primary", width="stretch")
 
     if generate_btn:
         progress_bar = st.progress(0, text="Initializing model pipeline...")
@@ -371,9 +431,15 @@ if nav_choice == "🎨 Campaign Studio":
             progress_bar.progress(85, text="Finishing & saving visuals...")
 
             saved_results = []
-            from poster_designer import render_infographic_action_poster, get_theme_poster_preset
-
-            theme_defaults = get_theme_poster_preset(health_theme)
+            chosen_t1 = typo_t1.strip() or def_t1
+            chosen_t2 = typo_t2.strip()
+            chosen_badge = typo_badge.strip()
+            chosen_bullets = [b.strip() for b in [typo_b1, typo_b2, typo_b3] if b.strip()]
+            if not chosen_bullets:
+                chosen_bullets = preset_bullets
+            chosen_footer = typo_footer.strip()
+            bullet_color = theme_defaults.get("bullet_color", (136, 192, 87))
+            footer_bg = theme_defaults.get("footer_bg", (11, 33, 45))
 
             for res in raw_results:
                 final_img = res["image"]
@@ -391,46 +457,34 @@ if nav_choice == "🎨 Campaign Studio":
                 res["theme"] = health_theme
                 res["style"] = style
 
-                # Automatically composite publication-grade campaign poster
-                if campaign_title.strip():
-                    words = campaign_title.strip().split()
-                    if len(words) > 2:
-                        mid_pt = (len(words) + 1) // 2
-                        t_l1 = " ".join(words[:mid_pt])
-                        t_l2 = " ".join(words[mid_pt:])
-                    else:
-                        t_l1 = words[0]
-                        t_l2 = words[1] if len(words) > 1 else ""
-                else:
-                    t_l1 = theme_defaults["title_line1"]
-                    t_l2 = theme_defaults["title_line2"]
-
+                # Automatically composite publication-grade campaign poster with pre-configured typography
                 initial_poster = render_infographic_action_poster(
                     base_image=final_img,
-                    title_line1=t_l1,
-                    title_line2=t_l2,
-                    badge_text=theme_defaults.get("badge", "PUBLIC HEALTH ADVOCACY"),
-                    action_bullets=theme_defaults["bullets"],
-                    bullet_color=theme_defaults.get("bullet_color", (136, 192, 87)),
-                    footer_bg=theme_defaults.get("footer_bg", (11, 33, 45)),
-                    footer_text=theme_defaults.get("footer", "Non-Clinical Patient Education • WellAware AI")
+                    title_line1=chosen_t1,
+                    title_line2=chosen_t2,
+                    badge_text=chosen_badge,
+                    action_bullets=chosen_bullets,
+                    bullet_color=bullet_color,
+                    footer_bg=footer_bg,
+                    footer_text=chosen_footer
                 )
 
                 poster_path = engine.save_visual_to_disk(
                     image=initial_poster,
-                    campaign_title=f"{t_l1}_{t_l2}_poster",
+                    campaign_title=f"{chosen_t1}_{chosen_t2}_poster",
                     seed=res["seed"]
                 )
 
                 res["poster"] = initial_poster
                 res["poster_filepath"] = poster_path
                 res["poster_filename"] = os.path.basename(poster_path)
-                res["poster_title1"] = t_l1
-                res["poster_title2"] = t_l2
-                res["poster_bullets"] = theme_defaults["bullets"]
-                res["poster_footer"] = theme_defaults.get("footer", "")
-                res["poster_badge"] = theme_defaults.get("badge", "PUBLIC HEALTH ADVOCACY")
-                res["bullet_color"] = theme_defaults.get("bullet_color", (136, 192, 87))
+                res["poster_title1"] = chosen_t1
+                res["poster_title2"] = chosen_t2
+                res["poster_bullets"] = chosen_bullets
+                res["poster_footer"] = chosen_footer
+                res["poster_badge"] = chosen_badge
+                res["bullet_color"] = bullet_color
+                res["footer_bg"] = footer_bg
 
                 saved_results.append(res)
 
@@ -551,7 +605,8 @@ if nav_choice == "🎨 Campaign Studio":
                         badge_text=edit_badge,
                         action_bullets=cleaned_bullets,
                         footer_text=edit_footer,
-                        bullet_color=r.get("bullet_color", (136, 192, 87))
+                        bullet_color=r.get("bullet_color", (136, 192, 87)),
+                        footer_bg=r.get("footer_bg", (11, 33, 45))
                     )
                     r["poster"] = updated_poster
                     r["poster_title1"] = edit_t1

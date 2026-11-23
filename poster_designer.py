@@ -206,39 +206,55 @@ def render_infographic_action_poster(
     bot_h = int(H * 0.23)   # 23% bottom action block (~220px)
     mid_h = H - top_h - bot_h  # 55% hero artwork (~529px)
 
-    # 1. Sample dominant background from base image edge pixels
+    # 1. Sample dominant background from base image top strip
     base_rgb = base_image.convert("RGB")
-    sample_pt = (min(12, base_image.width - 1), min(12, base_image.height - 1))
-    bg_color = base_rgb.getpixel(sample_pt)
+    top_strip = base_rgb.crop((0, 0, base_rgb.width, min(24, base_rgb.height)))
+    bg_color = top_strip.resize((1, 1), Image.Resampling.BOX).getpixel((0, 0))
 
     poster = Image.new("RGB", (W, H), color=bg_color)
 
-    # 2. Proportionally scale base image to fit center hero zone
+    # 2. Cover-scale base image to hero zone with ZERO side margins (full-width)
     img_w, img_h = base_image.size
-    scale = min(W / img_w, mid_h / img_h)
-    new_w, new_h = max(1, int(img_w * scale)), max(1, int(img_h * scale))
-    scaled_art = base_image.resize((new_w, new_h), Image.Resampling.LANCZOS).convert("RGBA")
+    scale = max(W / img_w, mid_h / img_h)
+    new_w = max(1, int(round(img_w * scale)))
+    new_h = max(1, int(round(img_h * scale)))
+    scaled_art = base_image.resize((new_w, new_h), Image.Resampling.LANCZOS).convert("RGB")
 
-    # 3. Create feather mask for top, left, and right borders so art merges seamlessly
-    feather = 18
-    mask = Image.new("L", (new_w, new_h), 255)
+    # Center crop to exact (W, mid_h) hero dimensions
+    crop_x = max(0, (new_w - W) // 2)
+    # Slight upward bias (30%) so faces and primary visual subjects stay centered
+    crop_y = max(0, int((new_h - mid_h) * 0.30)) if new_h > mid_h else 0
+    hero_art = scaled_art.crop((crop_x, crop_y, crop_x + W, crop_y + mid_h))
+
+    # 3. Create feather mask ONLY along the top boundary for seamless blend into header
+    # Left and right have 0 margin and 0 fade (full width bleed)
+    feather = 22
+    mask = Image.new("L", (W, mid_h), 255)
     draw_mask = ImageDraw.Draw(mask)
     for i in range(feather):
         alpha = int(255 * (i / feather))
-        draw_mask.line([(0, i), (new_w, i)], fill=alpha)
-        draw_mask.line([(i, 0), (i, new_h)], fill=alpha)
-        draw_mask.line([(new_w - 1 - i, 0), (new_w - 1 - i, new_h)], fill=alpha)
+        draw_mask.line([(0, i), (W, i)], fill=alpha)
     mask = mask.filter(ImageFilter.GaussianBlur(radius=2))
 
-    paste_x = (W - new_w) // 2
-    paste_y = top_h + (mid_h - new_h) // 2
-    poster.paste(scaled_art.convert("RGB"), (paste_x, paste_y), mask=mask)
+    # Paste hero art full-width from x=0 to x=W
+    poster.paste(hero_art, (0, top_h), mask=mask)
 
     # 4. Draw bottom solid footer block
     draw = ImageDraw.Draw(poster)
     draw.rectangle([0, H - bot_h, W, H], fill=footer_bg)
 
-    # 5. RENDER TOP HEADER & DISPLAY TITLE
+    # 5. RENDER TOP HEADER & DISPLAY TITLE WITH CONTRAST DETECTION
+    lum = 0.299 * bg_color[0] + 0.587 * bg_color[1] + 0.114 * bg_color[2]
+    is_light_bg = lum > 140
+
+    # Auto-adjust headline and badge colors to guarantee strong contrast against header background
+    if header_color == (253, 248, 238) and is_light_bg:
+        headline_fill = (15, 30, 48)  # Deep crisp navy for light header backgrounds
+        badge_fill = (35, 80, 110)
+    else:
+        headline_fill = header_color
+        badge_fill = (200, 230, 235) if not is_light_bg else (35, 80, 110)
+
     # Category badge
     if badge_text.strip():
         font_badge = get_font(size=12, bold=True)
@@ -246,7 +262,7 @@ def render_infographic_action_poster(
         bbox_b = font_badge.getbbox(clean_badge)
         bw = bbox_b[2] - bbox_b[0]
         bx = (W - bw) // 2
-        draw.text((bx, 22), clean_badge, font=font_badge, fill=(200, 230, 235))
+        draw.text((bx, 22), clean_badge, font=font_badge, fill=badge_fill)
 
     # Display headline (Arial Narrow Bold / Impact / Arial Black)
     font_title = get_font(size=56, display=True)
@@ -262,13 +278,19 @@ def render_infographic_action_poster(
         w1 = bbox1[2] - bbox1[0]
 
     y_line1 = 50
-    draw.text(((W - w1) // 2, y_line1), clean_l1, font=font_title, fill=header_color)
+    draw.text(((W - w1) // 2, y_line1), clean_l1, font=font_title, fill=headline_fill)
 
     if clean_l2:
         bbox2 = font_title.getbbox(clean_l2)
         w2 = bbox2[2] - bbox2[0]
+        if w2 > W - 40:
+            font_title2 = get_font(size=44, display=True)
+            bbox2 = font_title2.getbbox(clean_l2)
+            w2 = bbox2[2] - bbox2[0]
+        else:
+            font_title2 = font_title
         y_line2 = y_line1 + 62
-        draw.text(((W - w2) // 2, y_line2), clean_l2, font=font_title, fill=header_color)
+        draw.text(((W - w2) // 2, y_line2), clean_l2, font=font_title2, fill=headline_fill)
 
     # 6. RENDER BOTTOM ACTION BULLETS
     font_bullet = get_font(size=28, display=True)
@@ -285,7 +307,7 @@ def render_infographic_action_poster(
         dot_x = bullet_margin
         dot_y = start_by + 14
         draw.ellipse([dot_x - dot_r, dot_y - dot_r, dot_x + dot_r, dot_y + dot_r], fill=bullet_color)
-        draw.text((bullet_margin + 28, start_by), clean_item, font=font_bullet, fill=header_color)
+        draw.text((bullet_margin + 28, start_by), clean_item, font=font_bullet, fill=(245, 248, 250))
         start_by += line_step
 
     # 7. RENDER HELPLINE / ORGANIZATION FOOTER
