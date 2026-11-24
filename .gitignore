@@ -28,6 +28,6 @@ Desktop.ini
 *.pt
 
 # Keep generated_images folder but ignore ad-hoc files except .gitkeep
-# (Remove the line below if you want to track generated visuals in git)
-# generated_images/*
-# !generated_images/.gitkeep
+generated_images/*
+!generated_images/.gitkeep
+test_fullwidth_now.png
