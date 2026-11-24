@@ -135,6 +135,9 @@ if "selected_preset" not in st.session_state:
     st.session_state["selected_preset"] = None
 
 
+if "nav_radio" not in st.session_state:
+    st.session_state["nav_radio"] = "🏠 Home"
+
 # ---------------------------------------------------------------------------
 # Sidebar Navigation & System Diagnostic
 # ---------------------------------------------------------------------------
@@ -147,12 +150,12 @@ with st.sidebar:
     nav_choice = st.radio(
         "Navigation",
         [
+            "🏠 Home",
             "🎨 Campaign Studio",
             "🖼️ Session Gallery",
-            "⚡ Quick Presets",
-            "ℹ️ Architecture & Standards"
+            "⚡ Quick Presets"
         ],
-        index=0
+        key="nav_radio"
     )
 
     st.markdown("---")
@@ -210,9 +213,143 @@ st.markdown("""
 
 
 # ===========================================================================
+# VIEW 0: 🏠 HOME PAGE (WELCOME & OVERVIEW)
+# ===========================================================================
+if nav_choice == "🏠 Home":
+    # Hero Welcome Card
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #0E7490 0%, #0369A1 100%); padding: 36px 32px; border-radius: 16px; color: white; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(14, 116, 144, 0.15);">
+        <h1 style="color: white; margin: 0 0 8px 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">
+            🌿 Welcome to WellAware AI
+        </h1>
+        <p style="color: #E0F2FE; font-size: 1.15rem; margin: 0 0 16px 0; font-weight: 500; line-height: 1.5;">
+            Generative Visual AI Studio for Patient Wellness, Public Health Campaigns & Publication-Grade Posters.
+        </p>
+        <p style="color: #BAE6FD; font-size: 0.95rem; margin: 0; line-height: 1.6; max-width: 800px;">
+            Transform brief healthcare concepts into high-contrast, culturally sensitive campaign visuals,
+            complete with professional TrueType headlines, action takeaways, and 24/7 helpline footers in seconds.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Quick Navigation CTA Row
+    c_cta1, c_cta2, c_cta3 = st.columns(3, gap="medium")
+    with c_cta1:
+        if st.button("🚀 Open Campaign Studio", type="primary", use_container_width=True, key="home_btn_studio"):
+            st.session_state["nav_radio"] = "🎨 Campaign Studio"
+            st.rerun()
+    with c_cta2:
+        if st.button("⚡ Explore Quick Presets", use_container_width=True, key="home_btn_presets"):
+            st.session_state["nav_radio"] = "⚡ Quick Presets"
+            st.rerun()
+    with c_cta3:
+        if st.button("🖼️ View Campaign Gallery", use_container_width=True, key="home_btn_gallery"):
+            st.session_state["nav_radio"] = "🖼️ Session Gallery"
+            st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 3 Core Value Pillars
+    st.markdown("### ✨ Key Capabilities")
+    col1, col2, col3 = st.columns(3, gap="medium")
+
+    with col1:
+        st.markdown("""
+        <div class="card-panel" style="height: 100%;">
+            <div style="font-size: 1.8rem; margin-bottom: 8px;">🎨</div>
+            <h4 style="color: #0E7490; margin-bottom: 8px;">Domain-Specific Visual AI</h4>
+            <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+                Covers <strong>10 curated health domains</strong> (Mental Wellness, Heart Health, Diabetes, Cancer Care, Hygiene, Nutrition)
+                across <strong>6 artistic styles</strong> with prompt synthesis bounded within CLIP's 77-token ceiling.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="card-panel" style="height: 100%;">
+            <div style="font-size: 1.8rem; margin-bottom: 8px;">📰</div>
+            <h4 style="color: #0E7490; margin-bottom: 8px;">Commercial Poster Engine</h4>
+            <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+                Composites authentic <strong>640×960 (2:3 aspect ratio)</strong> campaign posters featuring
+                bold condensed display headlines, category badges, 3 bulleted action points, and crisis helpline footers.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="card-panel" style="height: 100%;">
+            <div style="font-size: 1.8rem; margin-bottom: 8px;">✍️</div>
+            <h4 style="color: #0E7490; margin-bottom: 8px;">100% Typographic Accuracy</h4>
+            <p style="font-size: 0.88rem; color: #475569; line-height: 1.5;">
+                Eliminates diffusion text hallucinations and spelling mistakes. Pure artwork is generated in latent space while
+                text is rendered via high-contrast TrueType typography with zero dead margins.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # How It Works Workflow
+    st.markdown("### 🔄 How It Works (3 Simple Steps)")
+    hw1, hw2, hw3 = st.columns(3, gap="medium")
+
+    with hw1:
+        st.markdown("""
+        <div class="card-panel" style="border-left: 4px solid #0E7490;">
+            <div style="font-weight: 700; color: #0E7490; font-size: 0.95rem; margin-bottom: 4px;">STEP 1</div>
+            <h4 style="margin: 0 0 6px 0;">Select Theme & Style</h4>
+            <p style="font-size: 0.85rem; color: #64748B; margin: 0;">
+                Choose from 10 health awareness domains or enter your own campaign concept, paired with one of 6 artistic styles.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with hw2:
+        st.markdown("""
+        <div class="card-panel" style="border-left: 4px solid #0284C7;">
+            <div style="font-weight: 700; color: #0284C7; font-size: 0.95rem; margin-bottom: 4px;">STEP 2</div>
+            <h4 style="margin: 0 0 6px 0;">Configure Typography</h4>
+            <p style="font-size: 0.85rem; color: #64748B; margin: 0;">
+                Customize the headline lines, advocacy badge, and 3 key action takeaways directly before generating.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with hw3:
+        st.markdown("""
+        <div class="card-panel" style="border-left: 4px solid #16A34A;">
+            <div style="font-weight: 700; color: #16A34A; font-size: 0.95rem; margin-bottom: 4px;">STEP 3</div>
+            <h4 style="margin: 0 0 6px 0;">Generate & Download</h4>
+            <p style="font-size: 0.85rem; color: #64748B; margin: 0;">
+                Receive both a finished publication-ready poster and standalone high-resolution artwork ready for one-click PNG export.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Bottom Jump Card
+    st.markdown("""
+    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 12px;">
+        <h3 style="color: #0F172A; margin: 0 0 8px 0;">Ready to Create Your Campaign?</h3>
+        <p style="color: #64748B; font-size: 0.95rem; margin: 0 0 16px 0;">
+            Launch the Campaign Studio to start generating custom patient education posters in seconds.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    c_btn_l, c_btn_mid, c_btn_r = st.columns([1, 1.5, 1])
+    with c_btn_mid:
+        if st.button("🚀 Launch Campaign Studio Now", type="primary", use_container_width=True, key="home_btn_bottom"):
+            st.session_state["nav_radio"] = "🎨 Campaign Studio"
+            st.rerun()
+
+
+# ===========================================================================
 # VIEW 1: 🎨 CAMPAIGN STUDIO (MAIN WORKFLOW)
 # ===========================================================================
-if nav_choice == "🎨 Campaign Studio":
+elif nav_choice == "🎨 Campaign Studio":
     # Form Layout
     col_input, col_style = st.columns([1.1, 0.9], gap="large")
 
@@ -749,37 +886,4 @@ elif nav_choice == "⚡ Quick Presets":
                 st.rerun()
 
 
-# ===========================================================================
-# VIEW 4: ℹ️ ARCHITECTURE & STANDARDS
-# ===========================================================================
-elif nav_choice == "ℹ️ Architecture & Standards":
-    st.markdown("### ℹ️ Architecture & Engineering Standards")
-    
-    st.markdown("""
-    **WellAware AI** implements an enterprise Generative AI pipeline tailored for non-clinical health communication:
-    
-    1. **Front-Loaded CLIP Encoding:**
-       - Traditional diffusion prompts often exceed CLIP's strict 77-token ceiling, discarding essential stylistic tokens.
-       - WellAware AI prioritizes primary subject and aesthetic style tokens at positions $0-30$, ensuring 100% attention retention.
-    
-    2. **DPM-Solver++ (Karras) Sampling:**
-       - Utilizes second-order differential equation solvers with Karras noise variance schedules.
-       - Delivers photorealistic and clean vector convergence in **20 steps** (70% faster than legacy 50-step PNDM schedulers).
-    
-    3. **Domain Negative Prompting:**
-       - Healthcare visuals require strict removal of clinical distress, morbid depictions, anatomical distortions, and garbled text.
-       - Every generation automatically injects medical safety and style-specific negative embeddings.
-    """)
 
-    st.markdown("---")
-    st.markdown("#### 🏗️ Modular Architecture Layout")
-    st.code("""
-WellAware-AI/
-│
-├── app.py                 # Multi-Page Studio UI & Session State Coordinator
-├── prompt_generator.py    # Front-Loaded 77-Token CLIP Synthesizer
-├── image_generator.py     # Singleton Diffusers Engine with DPM-Solver++ Karras
-├── config.py              # Central Inference Settings & Hardware Offload
-├── generated_images/      # Persisted Campaign PNG Repository
-└── assets/                # Visual Branding & Design Artifacts
-    """, language="text")
