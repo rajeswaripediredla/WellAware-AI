@@ -138,6 +138,14 @@ if "selected_preset" not in st.session_state:
 if "nav_radio" not in st.session_state:
     st.session_state["nav_radio"] = "🏠 Home"
 
+
+def navigate_to(page_name, preset_data=None):
+    """Callback to safely switch navigation before widgets instantiate."""
+    st.session_state["nav_radio"] = page_name
+    if preset_data is not None:
+        st.session_state["selected_preset"] = preset_data
+
+
 # ---------------------------------------------------------------------------
 # Sidebar Navigation & System Diagnostic
 # ---------------------------------------------------------------------------
@@ -249,17 +257,30 @@ if nav_choice == "🏠 Home":
     # Quick Navigation CTA Row
     c_cta1, c_cta2, c_cta3 = st.columns(3, gap="medium")
     with c_cta1:
-        if st.button("🚀 Open Campaign Studio", type="primary", use_container_width=True, key="home_btn_studio"):
-            st.session_state["nav_radio"] = "🎨 Campaign Studio"
-            st.rerun()
+        st.button(
+            "🚀 Open Campaign Studio",
+            type="primary",
+            use_container_width=True,
+            key="home_btn_studio",
+            on_click=navigate_to,
+            args=("🎨 Campaign Studio",)
+        )
     with c_cta2:
-        if st.button("⚡ Explore Quick Presets", use_container_width=True, key="home_btn_presets"):
-            st.session_state["nav_radio"] = "⚡ Quick Presets"
-            st.rerun()
+        st.button(
+            "⚡ Explore Quick Presets",
+            use_container_width=True,
+            key="home_btn_presets",
+            on_click=navigate_to,
+            args=("⚡ Quick Presets",)
+        )
     with c_cta3:
-        if st.button("🖼️ View Campaign Gallery", use_container_width=True, key="home_btn_gallery"):
-            st.session_state["nav_radio"] = "🖼️ Session Gallery"
-            st.rerun()
+        st.button(
+            "🖼️ View Campaign Gallery",
+            use_container_width=True,
+            key="home_btn_gallery",
+            on_click=navigate_to,
+            args=("🖼️ Session Gallery",)
+        )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -355,9 +376,14 @@ if nav_choice == "🏠 Home":
     """, unsafe_allow_html=True)
     c_btn_l, c_btn_mid, c_btn_r = st.columns([1, 1.5, 1])
     with c_btn_mid:
-        if st.button("🚀 Launch Campaign Studio Now", type="primary", use_container_width=True, key="home_btn_bottom"):
-            st.session_state["nav_radio"] = "🎨 Campaign Studio"
-            st.rerun()
+        st.button(
+            "🚀 Launch Campaign Studio Now",
+            type="primary",
+            use_container_width=True,
+            key="home_btn_bottom",
+            on_click=navigate_to,
+            args=("🎨 Campaign Studio",)
+        )
 
 
 # ===========================================================================
@@ -894,10 +920,13 @@ elif nav_choice == "⚡ Quick Presets":
                 </p>
             </div>
             """, unsafe_allow_html=True)
-            if st.button(f"Load '{p['title']}' into Studio", key=f"load_p_{i}", width="stretch"):
-                st.session_state["selected_preset"] = p
-                st.toast(f"✅ Loaded '{p['title']}'! Switching to Studio...", icon="🚀")
-                st.rerun()
+            st.button(
+                f"Load '{p['title']}' into Studio",
+                key=f"load_p_{i}",
+                use_container_width=True,
+                on_click=navigate_to,
+                args=("🎨 Campaign Studio", p)
+            )
 
 
 
