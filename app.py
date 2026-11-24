@@ -27,7 +27,7 @@ from image_generator import CampaignImageGenerator
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="WellAware AI - Campaign Visual Studio",
-    page_icon="🌿",
+    page_icon="assets/heart_logo.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -142,7 +142,16 @@ if "nav_radio" not in st.session_state:
 # Sidebar Navigation & System Diagnostic
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 🌿 **WellAware AI**")
+    st.markdown("""
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; background: #FFE4E6; border-radius: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#E11D48" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </span>
+        <span style="font-size: 1.35rem; font-weight: 800; color: #0E7490; letter-spacing: -0.3px;">WellAware AI</span>
+    </div>
+    """, unsafe_allow_html=True)
     st.caption("Patient Wellness Visual AI Studio")
     st.markdown('<span class="status-pill">● System Online</span>', unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
@@ -201,6 +210,11 @@ def get_all_saved_visuals():
 # ===========================================================================
 st.markdown("""
 <div class="brand-header">
+    <span style="display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: linear-gradient(135deg, #FFE4E6 0%, #FECDD3 100%); border-radius: 12px; margin-right: 12px; box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="#E11D48" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+    </span>
     <h1 class="brand-title">WellAware AI</h1>
 </div>
 <div class="brand-tagline">Generative Visual AI Studio for Patient Wellness & Public Health Campaigns</div>
@@ -220,7 +234,7 @@ if nav_choice == "🏠 Home":
     st.markdown("""
     <div style="background: linear-gradient(135deg, #0E7490 0%, #0369A1 100%); padding: 36px 32px; border-radius: 16px; color: white; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(14, 116, 144, 0.15);">
         <h1 style="color: white; margin: 0 0 8px 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">
-            🌿 Welcome to WellAware AI
+            ❤️ Welcome to WellAware AI
         </h1>
         <p style="color: #E0F2FE; font-size: 1.15rem; margin: 0 0 16px 0; font-weight: 500; line-height: 1.5;">
             Generative Visual AI Studio for Patient Wellness, Public Health Campaigns & Publication-Grade Posters.
